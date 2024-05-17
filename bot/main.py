@@ -67,13 +67,12 @@ def startBOT(dp: Dispatcher):
         if command_args and command_args[0].startswith("ref_"):
             referrer_id = int(command_args[0].split("_")[1])
             if referrer_id == user_id:
-                await message.answer(_("No puede utilizar su enlace de referencia", lang) + " 😋")
                 await message.answer(f"👋 {_('Hola', lang)} {first_name}, {_('Invita a gente al grupo y consigue un premio', lang)}\n\n🫂 {_('Invitaste a', lang)}: {Number_of_invites}\n\n🔗 {_('Tu enlace de invitación:', lang)}\n{link}", reply_markup=kb.main_menu(lang))
                 return
 
             is_existing = await db.user_in_invited_referrals(user_id)
             if is_existing == True:
-                await message.answer(_("You can no longer use the referral link", lang) + " 😋")
+                await message.answer(_("You can no longer use the referral link", lang))
             else:
                 await message.answer("👌 " + (_("Ir a nuestro grupo", lang)), reply_markup=kb.group_kb(group_link))
 
@@ -86,7 +85,7 @@ def startBOT(dp: Dispatcher):
                     await db.insert_referrer(referrer_id, user_id)
                     await db.insert_invited_referral(user_id)
                 else:
-                    await bot.send_message(user_id, f"⭐️ {_('La invitación ha caducado, por favor, siga el enlace de referencia de nuevo y ejecute el bot para iniciar sesión correctamente en el grupo', lang)}\n\n🔗 {link}")
+                    await bot.send_message(user_id, f"⭐️ {_('La invitación ha caducado, por favor, siga el enlace de referencia de nuevo y ejecute el bot para iniciar sesión correctamente en el grupo', lang)}")
         else:
             await message.answer(f"👋 {_('Hola', lang)} {first_name}, {_('Invita a gente al grupo y consigue un premio', lang)}\n\n🫂 {_('Invitaste a', lang)}: {Number_of_invites}\n\n🔗 {_('Tu enlace de invitación:', lang)}\n{link}", reply_markup=kb.main_menu(lang))
 
