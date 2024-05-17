@@ -29,7 +29,7 @@ group_link = f"https://t.me/Robotechwargame"
 group_id = -1002096387913
 # -1002139542888
 
-# bot_link = "https://t.me/Robotechwar_w_bot?start=ref_"
+# bot_link = "https://t.me/mdbh_ssq_bot?start=ref_"
 
 # group_link = f"https://t.me/test4invbot"
 
@@ -81,6 +81,12 @@ def startBOT(dp: Dispatcher):
                 result = await check_user_in_group(user_id, group_id)
                 if result is True:
                     await bot.send_message(referrer_id, f"⭐️ {_('Your link took 1 user to the group', lang)}")
+
+                    referrer_username = await db.get_username_by_user_id(referrer_id)
+
+                    message_text = f"{referrer_username} invitó a {username}"
+                    await bot.send_message(group_id, message_text)
+
                     await db.increase_amount(referrer_id)
                     await db.insert_referrer(referrer_id, user_id)
                     await db.insert_invited_referral(user_id)

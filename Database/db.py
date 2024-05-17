@@ -71,3 +71,13 @@ async def reset_database():
 
     conn.commit()
     conn.close()
+
+
+async def get_username_by_user_id(user_id: int) -> str:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username FROM users WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else None
+
