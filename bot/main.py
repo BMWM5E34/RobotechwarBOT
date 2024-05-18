@@ -22,17 +22,11 @@ class LanguageSwitch(StatesGroup):
 
 bot = Bot(token=bot_token)
 
-bot_link = "https://t.me/Robotechwar_w_bot?start=ref_"
+bot_link = "https://t.me/Robotechwar_winner_c_bot?start=ref_"
 
 group_link = f"https://t.me/Robotechwargame"
 
 group_id = -1002139542888
-
-# bot_link = "https://t.me/mdbh_ssq_bot?start=ref_"
-
-# group_link = f"https://t.me/test4invbot"
-
-# group_id = -1002096387913
 
 async def check_user_in_group(user_id: int, chat_id: int) -> bool:
     bot = Bot(token=bot_token)
