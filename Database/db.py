@@ -3,18 +3,24 @@ import sqlite3
 def create_connection():
     return sqlite3.connect('Database/db.db')
 
-async def AddUser(user_id, username, amount):
+async def AddUser(user_id, username, user_firstname, amount):
     conn = create_connection()
     cursor = conn.cursor()
-    
+
+    if username is None:
+        username = user_firstname
+    else:
+        username = f"@{username}"
+
     cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
     existing_user = cursor.fetchone()
-    
+
     if existing_user is None:
         cursor.execute("INSERT INTO users (user_id, username, amount) VALUES (?, ?, ?)", (user_id, username, amount))
         conn.commit()
 
     conn.close()
+
 
 async def increase_amount(user_id):
     conn = create_connection()

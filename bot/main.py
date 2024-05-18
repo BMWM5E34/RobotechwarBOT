@@ -26,8 +26,7 @@ bot_link = "https://t.me/Robotechwar_w_bot?start=ref_"
 
 group_link = f"https://t.me/Robotechwargame"
 
-group_id = -1002096387913
-# -1002139542888
+group_id = -1002139542888
 
 # bot_link = "https://t.me/mdbh_ssq_bot?start=ref_"
 
@@ -49,11 +48,11 @@ def startBOT(dp: Dispatcher):
     @dp.message(CommandStart())
     async def cmd_start(message: Message, state: FSMContext):
         user_id = message.from_user.id
-
-        username = f"@{message.from_user.username}"
-        await db.AddUser(user_id, username, 0)
-        Number_of_invites = await db.GetAmount(user_id)
+        username = message.from_user.username
         first_name = message.from_user.first_name if message.from_user.first_name else ""
+
+        await db.AddUser(user_id, username, first_name, 0)
+        Number_of_invites = await db.GetAmount(user_id)
 
         set_lang = "sp"
         await state.update_data(lang=set_lang)
@@ -63,7 +62,7 @@ def startBOT(dp: Dispatcher):
 
         link = f"{bot_link}{user_id}"
         command_args = message.text.split()[1:]
-        
+
         if command_args and command_args[0].startswith("ref_"):
             referrer_id = int(command_args[0].split("_")[1])
             if referrer_id == user_id:
@@ -84,7 +83,9 @@ def startBOT(dp: Dispatcher):
 
                     referrer_username = await db.get_username_by_user_id(referrer_id)
 
-                    message_text = f"{referrer_username} invitó a {username}"
+                    referal = await db.get_username_by_user_id(user_id)
+                    message_text = f"{referrer_username} invitó a {referal}"
+                    
                     await bot.send_message(group_id, message_text)
 
                     await db.increase_amount(referrer_id)
@@ -147,6 +148,7 @@ def startBOT(dp: Dispatcher):
 
             await message.answer(f"Ha establecido correctamente la hora de envío de las estadísticas.")
             await asyncio.sleep(delay_seconds * 86400)
+            # await asyncio.sleep(delay_seconds)
 
             conn = db.create_connection()
             cursor = conn.cursor()
