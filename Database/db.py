@@ -87,3 +87,20 @@ async def get_username_by_user_id(user_id: int) -> str:
     conn.close()
     return result[0] if result else None
 
+async def delete_user_from_invited_referrals(user_id):
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("DELETE FROM invited_referrals WHERE referral_id = ?", (user_id,))
+    conn.commit()
+
+    conn.close()
+
+async def set_amount(user_id: int, amount: int):
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE users SET amount = ? WHERE user_id = ?", (amount, user_id))
+    conn.commit()
+
+    conn.close()

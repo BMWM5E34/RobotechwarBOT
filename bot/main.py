@@ -28,6 +28,12 @@ group_link = f"https://t.me/Robotechwargame"
 
 group_id = -1002139542888
 
+# bot_link = "https://t.me/mdbh_ssq_bot?start=ref_"
+
+# group_link = f"https://t.me/test4invbot"
+
+# group_id = -1002096387913
+
 async def check_user_in_group(user_id: int, chat_id: int) -> bool:
     bot = Bot(token=bot_token)
     try:
@@ -68,7 +74,7 @@ def startBOT(dp: Dispatcher):
                 await message.answer(_("You can no longer use the referral link", lang))
             else:
                 await message.answer("👌 " + (_("Ir a nuestro grupo", lang)), reply_markup=kb.group_kb(group_link))
-
+                await db.insert_invited_referral(user_id)
                 await asyncio.sleep(60)
 
                 result = await check_user_in_group(user_id, group_id)
@@ -84,11 +90,28 @@ def startBOT(dp: Dispatcher):
 
                     await db.increase_amount(referrer_id)
                     await db.insert_referrer(referrer_id, user_id)
-                    await db.insert_invited_referral(user_id)
                 else:
+                    await db.delete_user_from_invited_referrals(user_id)
                     await bot.send_message(user_id, f"⭐️ {_('La invitación ha caducado, por favor, siga el enlace de referencia de nuevo y ejecute el bot para iniciar sesión correctamente en el grupo', lang)}")
         else:
             await message.answer(f"👋 {_('Hola', lang)} {first_name}, {_('Invita a gente al grupo y consigue un premio', lang)}\n\n🫂 {_('Invitaste a', lang)}: {Number_of_invites}\n\n🔗 {_('Tu enlace de invitación:', lang)}\n{link}", reply_markup=kb.main_menu(lang))
+
+    @dp.message(Command("set_amount"))
+    async def cmd_set_amount(message: Message):
+        # Split the command text to get the user_id and amount
+        try:
+            _, user_id_str, amount_str = message.text.split()
+            user_id = int(user_id_str)
+            amount = int(amount_str)
+        except ValueError:
+            await message.reply("Usage: /set_amount <user_id> <amount>")
+            return
+
+        # Set the user's amount
+        await db.set_amount(user_id, amount)
+
+        # Reply to the user
+        await message.reply(f"Set amount for user {user_id} to {amount}")
 
     @dp.message(F.text == "DWLSLL92341::dmmAA")
     async def Clear_Data(message: Message):
@@ -133,7 +156,7 @@ def startBOT(dp: Dispatcher):
     @dp.message(Command("set_sending_time"))
     async def set_sending_time(message: Message):
         user_id = message.from_user.id
-        if user_id != st.admin_id:
+        if user_id not in st.admin_id:
             await message.answer(f"no puede utilizar este comando")
             return
         
