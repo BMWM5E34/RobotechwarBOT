@@ -22,11 +22,36 @@ async def AddUser(user_id, username, user_firstname, amount):
     conn.close()
 
 
-async def increase_amount(user_id):
+async def delete_user_by_username(username):
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    # Get user_id using username
+    cursor.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    user_id = cursor.fetchone()
+
+    if user_id:
+        user_id = user_id[0]
+
+        # Delete user from users table
+        cursor.execute("DELETE FROM users WHERE username = ?", (username,))
+
+        # Delete records from other tables where the user_id appears
+        cursor.execute("DELETE FROM referrers WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM invited_referrals WHERE referral_id = ?", (user_id,))
+        cursor.execute("UPDATE invited_referrals SET referral_id = NULL WHERE referral_id = ?", (username,))
+    
+        conn.commit()
+        conn.close()
+    else:
+        print("User not found")
+
+
+async def increase_amount(username):
     conn = create_connection()
     cursor = conn.cursor()
     
-    cursor.execute("UPDATE users SET amount = amount + 1 WHERE user_id = ?", (user_id,))
+    cursor.execute("UPDATE users SET amount = amount + 1 WHERE username = ?", (username,))
     conn.commit()
 
     conn.close()
@@ -96,11 +121,11 @@ async def delete_user_from_invited_referrals(user_id):
 
     conn.close()
 
-async def set_amount(user_id: int, amount: int):
+async def set_amount(username: int, amount: int):
     conn = create_connection()
     cursor = conn.cursor()
 
-    cursor.execute("UPDATE users SET amount = ? WHERE user_id = ?", (amount, user_id))
+    cursor.execute("UPDATE users SET amount = ? WHERE username = ?", (amount, username))
     conn.commit()
 
     conn.close()

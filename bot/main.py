@@ -7,42 +7,36 @@ from aiogram.filters import CommandStart, Command, exception
 from aiogram.enums.chat_member_status import ChatMemberStatus
 import aiogram.exceptions as exceptions
 
-# Other
 import time
 from translations import _
 from bot import keyboard as kb
 from bot.settings import bot_token
 
 import bot.settings as st
-
 import Database.db as db
 
 class LanguageSwitch(StatesGroup):
     SWITCHING = State()
 
 bot = Bot(token=bot_token)
-
-bot_link = "https://t.me/Robotechwar_winner_c_bot?start=ref_"
-
+bot_link = "https://t.me/robotechwar_winner_crypto_bot?start=ref_"
 group_link = f"https://t.me/Robotechwargame"
-
 group_id = -1002139542888
 
-# bot_link = "https://t.me/mdbh_ssq_bot?start=ref_"
 
-# group_link = f"https://t.me/test4invbot"
-
-# group_id = -1002096387913
+# bot_link = "https://t.me/robotechwar_winner_crypto_bot?start=ref_"
+# group_link = f"https://t.me/test49982"
+# group_id = -1002034208021
 
 async def check_user_in_group(user_id: int, chat_id: int) -> bool:
-    bot = Bot(token=bot_token)
-    try:
-        chat_member = await bot.get_chat_member(chat_id, user_id)
-        return chat_member.status != ChatMemberStatus.LEFT and chat_member.status != ChatMemberStatus.KICKED
-    except exceptions.ChatNotFound:
-        return False
-    except exceptions.UserNotFound:
-        return False
+    async with Bot(token=bot_token) as bot:
+        try:
+            chat_member = await bot.get_chat_member(chat_id, user_id)
+            return chat_member.status != ChatMemberStatus.LEFT and chat_member.status != ChatMemberStatus.KICKED
+        except exceptions.ChatNotFound:
+            return False
+        except exceptions.UserNotFound:
+            return False
 
 def startBOT(dp: Dispatcher):
     @dp.message(CommandStart())
@@ -70,25 +64,24 @@ def startBOT(dp: Dispatcher):
                 return
 
             is_existing = await db.user_in_invited_referrals(user_id)
-            if is_existing == True:
+            if is_existing:
                 await message.answer(_("You can no longer use the referral link", lang))
             else:
                 await message.answer("👌 " + (_("Ir a nuestro grupo", lang)), reply_markup=kb.group_kb(group_link))
                 await db.insert_invited_referral(user_id)
-                await asyncio.sleep(60)
+                await asyncio.sleep(10)
 
                 result = await check_user_in_group(user_id, group_id)
-                if result is True:
+                if result:
                     await bot.send_message(referrer_id, f"⭐️ {_('Your link took 1 user to the group', lang)}")
 
                     referrer_username = await db.get_username_by_user_id(referrer_id)
-
                     referal = await db.get_username_by_user_id(user_id)
                     message_text = f"{referrer_username} invitó a {referal}"
                     
                     await bot.send_message(group_id, message_text)
 
-                    await db.increase_amount(referrer_id)
+                    await db.increase_amount(referrer_username)
                     await db.insert_referrer(referrer_id, user_id)
                 else:
                     await db.delete_user_from_invited_referrals(user_id)
@@ -96,25 +89,43 @@ def startBOT(dp: Dispatcher):
         else:
             await message.answer(f"👋 {_('Hola', lang)} {first_name}, {_('Invita a gente al grupo y consigue un premio', lang)}\n\n🫂 {_('Invitaste a', lang)}: {Number_of_invites}\n\n🔗 {_('Tu enlace de invitación:', lang)}\n{link}", reply_markup=kb.main_menu(lang))
 
+    @dp.message(Command("delete_user"))
+    async def delete_user_command(message: types.Message):
+        user_id = message.from_user.id
+        if user_id not in st.admin_id:
+            await message.answer(f"no puede utilizar este comando")
+            return
+        command_args = message.text.split(maxsplit=1)
+        if len(command_args) != 2:
+            await message.answer("Usage: /delete_user (username)")
+            return
+        
+        username = command_args[1]
+        await db.delete_user_by_username(username)
+        await message.answer(f"User '{username}' has been deleted from the database.")
+        
     @dp.message(Command("set_amount"))
     async def cmd_set_amount(message: Message):
-        # Split the command text to get the user_id and amount
+        user_id = message.from_user.id
+        if user_id not in st.admin_id:
+            await message.answer(f"no puede utilizar este comando")
+            return
         try:
-            _, user_id_str, amount_str = message.text.split()
-            user_id = int(user_id_str)
+            _, username, amount_str = message.text.split()
             amount = int(amount_str)
         except ValueError:
-            await message.reply("Usage: /set_amount <user_id> <amount>")
+            await message.reply("Usage: /set_amount <username> <amount>")
             return
 
-        # Set the user's amount
-        await db.set_amount(user_id, amount)
-
-        # Reply to the user
-        await message.reply(f"Set amount for user {user_id} to {amount}")
+        await db.set_amount(username, amount)
+        await message.reply(f"Set amount for user {username} to {amount}")
 
     @dp.message(F.text == "DWLSLL92341::dmmAA")
     async def Clear_Data(message: Message):
+        user_id = message.from_user.id
+        if user_id not in st.admin_id:
+            await message.answer(f"no puede utilizar este comando")
+            return
         await db.reset_database()
 
     @dp.callback_query(F.data == 'UsersStatistics')
@@ -165,7 +176,6 @@ def startBOT(dp: Dispatcher):
 
             await message.answer(f"Ha establecido correctamente la hora de envío de las estadísticas.")
             await asyncio.sleep(delay_seconds * 86400)
-            # await asyncio.sleep(delay_seconds)
 
             conn = db.create_connection()
             cursor = conn.cursor()
@@ -207,3 +217,11 @@ def startBOT(dp: Dispatcher):
 
         await callback_query.message.delete()
         await callback_query.message.answer(f"👋 {_('Hola', lang)} {first_name}, {_('Invita a gente al grupo y consigue un premio', lang)}\n\n🫂 {_('Invitaste a', lang)}: {Number_of_invites}\n\n🔗 {_('Tu enlace de invitación:', lang)}\n{link}", reply_markup=kb.main_menu(lang))
+
+async def main():
+    dp = Dispatcher()
+    startBOT(dp)
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
